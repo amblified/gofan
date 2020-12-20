@@ -12,6 +12,12 @@ var (
 )
 
 type Ruleset struct {
+	Timeouts struct {
+		Standard  Duration `json:"standard"`
+		Upgrade   Duration `json:"upgrade"`
+		Downgrade Duration `json:"downgrade"`
+	} `json:"timeouts"`
+
 	Modes []Mode `json:"modes"`
 }
 

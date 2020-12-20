@@ -1,4 +1,9 @@
 {
+  "timeouts": {
+    "standard": "1m",
+    "upgrade": "20s",
+    "downgrade": "6s"
+  },
   "modes": [
     {
       "name": "default",

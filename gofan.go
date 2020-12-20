@@ -23,9 +23,9 @@ func applyLevel(level string) error {
 	return tee.Run()
 }
 
-func checkIfShouldDowngrade(transitionWhenBelow float32) <-chan error {
+func checkIfShouldDowngrade(transitionWhenBelow float32, timeout time.Duration) <-chan error {
 	c := make(chan error)
-	ticker := time.NewTicker(time.Second * 6) // should dowgrade asap
+	ticker := time.NewTicker(timeout) // should dowgrade asap
 
 	go func(transitionWhenBelow float32, callback chan<- error, ticker *time.Ticker) {
 		for range ticker.C {
@@ -45,9 +45,9 @@ func checkIfShouldDowngrade(transitionWhenBelow float32) <-chan error {
 	return c
 }
 
-func checkIfShouldUpgrade(ruleset *Ruleset, currentModeName string) <-chan error {
+func checkIfShouldUpgrade(ruleset *Ruleset, currentModeName string, timeout time.Duration) <-chan error {
 	c := make(chan error)
-	ticker := time.NewTicker(time.Second * 24)
+	ticker := time.NewTicker(timeout)
 
 	go func(ruleset *Ruleset, currentModeName string, ticker *time.Ticker) {
 		for range ticker.C {
@@ -70,7 +70,7 @@ func checkIfShouldUpgrade(ruleset *Ruleset, currentModeName string) <-chan error
 	return c
 }
 
-// sometimes my os decides it's time for lift-off; even when the current cpu temperatur says it's not. This occurs often when AC is plugged in
+// sometimes my os decides it's time for lift-off; even when the current cpu temperatur (and Elon Musk) says it's not. This occurs often when AC is plugged in
 func fanToFastForCurrentTemp() <-chan error {
 	c := make(chan error)
 	return c
@@ -101,16 +101,14 @@ func logic(ruleset *Ruleset) error {
 		}
 		log.Printf("success\n")
 
-		timeout := time.Minute * 1
-
 		select {
-		case err = <-checkIfShouldDowngrade(float32(mode.TransitionWhenBelow)):
+		case err = <-checkIfShouldDowngrade(float32(mode.TransitionWhenBelow), ruleset.Timeouts.Downgrade.Duration):
 			log.Printf("should downgrade\n")
-		case err = <-checkIfShouldUpgrade(ruleset, mode.Name):
+		case err = <-checkIfShouldUpgrade(ruleset, mode.Name, ruleset.Timeouts.Upgrade.Duration):
 			log.Printf("should upgrade\n")
 		case err = <-fanToFastForCurrentTemp():
-		case <-time.After(timeout):
-			log.Printf("timed out after %v\n", timeout)
+		case <-time.After(ruleset.Timeouts.Standard.Duration):
+			log.Printf("timed out after %v\n", ruleset.Timeouts.Standard.Duration)
 		}
 
 		if err != nil {
