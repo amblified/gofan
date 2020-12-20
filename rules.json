@@ -1,0 +1,33 @@
+{
+  "modes": [
+    {
+      "name": "default",
+      "starting_at": 0,
+      "level": "0"
+    },
+    {
+      "name": "light",
+      "starting_at": 55,
+      "transition_when_below": 50,
+      "level": "1"
+    },
+    {
+      "name": "medium",
+      "starting_at": 60,
+      "transition_when_below": 50,
+      "level": "2"
+    },
+    {
+      "name": "fast",
+      "starting_at": 65,
+      "transition_when_below": 50,
+      "level": "4"
+    },
+    {
+      "name": "faster than the flash",
+      "starting_at": 70,
+      "transition_when_below": 50,
+      "level": "6"
+    }
+  ]
+}
