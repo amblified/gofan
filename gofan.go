@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"log"
 	"os/exec"
 	"time"
@@ -120,5 +121,6 @@ func logic(ruleset *Ruleset) error {
 func main() {
 	if err := logic(DefaultRuleset); err != nil {
 		log.Fatal(err)
+		fmt.Fprintf(Notify, "error occured")
 	}
 }
