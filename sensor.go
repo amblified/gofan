@@ -98,9 +98,25 @@ func getTemp() (float32, error) {
 		return -1, err
 	}
 
-	info.CoreTempIsa.Core0.Temp2Input += info.CoreTempIsa.Core1.Temp3Input
-	info.CoreTempIsa.Core0.Temp2Input += info.CoreTempIsa.Core2.Temp4Input
-	info.CoreTempIsa.Core0.Temp2Input += info.CoreTempIsa.Core3.Temp5Input
+	values := []float32{
+		info.CoreTempIsa.Core0.Temp2Input,
+		info.CoreTempIsa.Core1.Temp3Input,
+		info.CoreTempIsa.Core2.Temp4Input,
+		info.CoreTempIsa.Core3.Temp5Input,
+	}
 
-	return info.CoreTempIsa.Core0.Temp2Input / 4, nil
+	current := values[0]
+	for _, v := range values[1:] {
+		if v > current {
+			current = v
+		}
+	}
+
+	return current, nil
+
+	// info.CoreTempIsa.Core0.Temp2Input += info.CoreTempIsa.Core1.Temp3Input
+	// info.CoreTempIsa.Core0.Temp2Input += info.CoreTempIsa.Core2.Temp4Input
+	// info.CoreTempIsa.Core0.Temp2Input += info.CoreTempIsa.Core3.Temp5Input
+
+	// return info.CoreTempIsa.Core0.Temp2Input / 4, nil
 }
