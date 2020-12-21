@@ -98,5 +98,9 @@ func getTemp() (float32, error) {
 		return -1, err
 	}
 
-	return info.CoreTempIsa.Core0.Temp2Input, nil // TODO: use some heuristic here
+	info.CoreTempIsa.Core0.Temp2Input += info.CoreTempIsa.Core1.Temp3Input
+	info.CoreTempIsa.Core0.Temp2Input += info.CoreTempIsa.Core2.Temp4Input
+	info.CoreTempIsa.Core0.Temp2Input += info.CoreTempIsa.Core3.Temp5Input
+
+	return info.CoreTempIsa.Core0.Temp2Input / 4, nil
 }
