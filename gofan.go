@@ -100,7 +100,6 @@ func checkForUnmonitoredDeviceChanges(wantedCurrentLevel string) <-chan error {
 				continue
 			}
 
-			fmt.Fprintf(Notify, "fan was too fast")
 			c <- nil
 		}
 	}(wantedCurrentLevel, c, ticker)
@@ -154,6 +153,6 @@ func logic(ruleset *Ruleset) error {
 func main() {
 	if err := logic(DefaultRuleset); err != nil {
 		log.Fatal(err)
-		fmt.Fprintf(Notify, "error occured")
+		fmt.Fprintf(NotifyErr, "error occured")
 	}
 }

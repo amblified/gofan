@@ -6,15 +6,15 @@ import (
 	"os/exec"
 )
 
-var Notify = &notify{}
+var NotifyErr = &notifyErr{}
 
-var _ io.Writer = &notify{}
+var _ io.Writer = &notifyErr{}
 
-type notify struct {
+type notifyErr struct {
 }
 
-func (n notify) Write(bytes []byte) (int, error) {
-	cmd := exec.Command("notify-send", "go_fan: "+string(bytes))
+func (n notifyErr) Write(bytes []byte) (int, error) {
+	cmd := exec.Command("notify-send", "--urgency=critical", "go_fan: "+string(bytes))
 	cmd.Stderr = os.Stderr
 	cmd.Stdout = os.Stdout
 	cmd.Stdin = nil
