@@ -80,12 +80,10 @@ func checkIfShouldUpgrade(ruleset *Ruleset, currentModeName string, timeout time
 
 // sometimes my os decides it's time for lift-off; even when the current cpu temperatur (and Elon Musk) says it's not. This occurs often when AC is plugged in
 // in this case the current level as given by reading from the fan device does not equal the level of the mode we're currently in. In this case we should trigger a recheck on the currently best suited mode
-func checkForUnmonitoredDeviceChanges(wantedCurrentLevel string) <-chan error {
+func checkForUnmonitoredDeviceChanges(wantedCurrentLevel string, timeout time.Duration) <-chan error {
 	c := make(chan error)
 
-	timout := time.Second * 10
-
-	ticker := time.NewTicker(timout)
+	ticker := time.NewTicker(timeout)
 
 	go func(wantedCurrentLevel string, callback chan<- error, ticker *time.Ticker) {
 		for range ticker.C {
@@ -137,7 +135,7 @@ func logic(ruleset *Ruleset) error {
 			log.Printf("should downgrade\n")
 		case err = <-checkIfShouldUpgrade(ruleset, mode.Name, ruleset.Timeouts.Upgrade.Duration):
 			log.Printf("should upgrade\n")
-		case err = <-checkForUnmonitoredDeviceChanges(mode.Level):
+		case err = <-checkForUnmonitoredDeviceChanges(mode.Level, ruleset.Timeouts.UnmonitoredChange.Duration):
 			log.Printf("umonitored device change\n")
 		case <-time.After(ruleset.Timeouts.Standard.Duration):
 			log.Printf("timed out after %v\n", ruleset.Timeouts.Standard.Duration)

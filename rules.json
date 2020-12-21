@@ -1,20 +1,15 @@
 {
   "timeouts": {
-    "standard": "1m",
+    "standard": "30s",
     "upgrade": "20s",
-    "downgrade": "6s"
+    "downgrade": "6s",
+    "unmonitored_change": "10s"
   },
   "modes": [
     {
       "name": "default",
       "starting_at": 0,
       "level": "0"
-    },
-    {
-      "name": "light",
-      "starting_at": 55,
-      "transition_when_below": 50,
-      "level": "1"
     },
     {
       "name": "medium",

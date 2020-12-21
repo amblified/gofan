@@ -3,7 +3,9 @@ package main
 import (
 	"encoding/json"
 	"io/ioutil"
+	"log"
 	"os"
+	"path/filepath"
 )
 
 var (
@@ -13,9 +15,10 @@ var (
 
 type Ruleset struct {
 	Timeouts struct {
-		Standard  Duration `json:"standard"`
-		Upgrade   Duration `json:"upgrade"`
-		Downgrade Duration `json:"downgrade"`
+		Standard          Duration `json:"standard"`
+		Upgrade           Duration `json:"upgrade"`
+		Downgrade         Duration `json:"downgrade"`
+		UnmonitoredChange Duration `json:"unmonitored_change"`
 	} `json:"timeouts"`
 
 	Modes []Mode `json:"modes"`
@@ -62,9 +65,14 @@ func readRuleset(path string) (*Ruleset, error) {
 // go is fun, innit?
 func init() {
 	var err error
+
+	DefaultRulesetPath, err = filepath.Abs(DefaultRulesetPath)
+	notreached(err)
+	log.Printf("loading rules from %q\n", DefaultRulesetPath)
 	DefaultRuleset, err = readRuleset(DefaultRulesetPath)
 	if err != nil {
-		panic(err)
+		log.Printf("fatal error occured when trying to load ruleset. aborting..")
+		os.Exit(1)
 	}
 }
 
