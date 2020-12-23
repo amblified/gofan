@@ -1,9 +1,9 @@
 {
   "timeouts": {
-    "standard": "30s",
-    "upgrade": "20s",
+    "standard": "1m",
+    "upgrade": "16s",
     "downgrade": "6s",
-    "unmonitored_change": "10s"
+    "unmonitored_change": "6s"
   },
   "modes": [
     {
