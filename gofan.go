@@ -1,11 +1,8 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
 	"log"
-	"os"
-	"os/exec"
 	"time"
 )
 
@@ -13,21 +10,6 @@ const (
 	dev            = "/proc/acpi/ibm/fan"
 	configFileName = "gofan"
 )
-
-func applyLevel(level string) error {
-	// echo level 0 | tee /proc/acpi/ibm/fan
-
-	stdin := &bytes.Buffer{}
-
-	tee := exec.Command("tee", dev)
-	tee.Stdin = stdin
-	tee.Stderr = os.Stderr
-	tee.Stdout = log.Writer()
-
-	stdin.WriteString("level " + level + "\n")
-
-	return tee.Run()
-}
 
 func checkIfShouldDowngrade(transitionWhenBelow float32, timeout time.Duration) <-chan error {
 	c := make(chan error)

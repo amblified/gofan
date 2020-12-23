@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"log"
 	"os"
 	"os/exec"
 	"strings"
@@ -43,4 +44,19 @@ func parseFanLevel(str string) string {
 	// line = strings.TrimRight(line, whitespace)
 
 	return line
+}
+
+func applyLevel(level string) error {
+	// echo level 0 | tee /proc/acpi/ibm/fan
+
+	stdin := &bytes.Buffer{}
+
+	tee := exec.Command("tee", dev)
+	tee.Stdin = stdin
+	tee.Stderr = os.Stderr
+	tee.Stdout = log.Writer()
+
+	stdin.WriteString("level " + level + "\n")
+
+	return tee.Run()
 }
