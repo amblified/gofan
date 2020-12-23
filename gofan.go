@@ -11,85 +11,92 @@ const (
 	configFileName = "gofan"
 )
 
-func checkIfShouldDowngrade(transitionWhenBelow float32, timeout time.Duration) <-chan error {
-	c := make(chan error)
-	ticker := time.NewTicker(timeout) // should dowgrade asap
-
-	go func(transitionWhenBelow float32, callback chan<- error, ticker *time.Ticker) {
-		for range ticker.C {
-			temp, err := getTemp()
-			if err != nil {
-				callback <- err
-				return
-			}
-
-			if temp > transitionWhenBelow {
-				continue
-			}
-
-			callback <- nil
+func checkIfShouldDowngrade(currentMode **Mode, ticker *time.Ticker, callback chan<- error) {
+	for range ticker.C {
+		if *currentMode == nil {
+			continue
 		}
-	}(transitionWhenBelow, c, ticker)
 
-	return c
+		temp, err := getTemp()
+		if err != nil {
+			callback <- err
+			return
+		}
+
+		if temp > float32((*currentMode).TransitionWhenBelow) {
+			continue
+		}
+
+		log.Printf("should downgrade\n")
+		callback <- nil
+	}
 }
 
-func checkIfShouldUpgrade(ruleset *Ruleset, currentModeName string, timeout time.Duration) <-chan error {
-	c := make(chan error)
-	ticker := time.NewTicker(timeout)
-
-	go func(ruleset *Ruleset, currentModeName string, callback chan<- error, ticker *time.Ticker) {
-		for range ticker.C {
-			temp, err := getTemp()
-			if err != nil {
-				c <- err
-				return
-			}
-
-			mode, err := ruleset.findAppropriateMode(temp)
-			notreached(err)
-
-			if mode.Name == currentModeName {
-				continue
-			}
-
-			c <- nil
+func checkIfShouldUpgrade(currentMode **Mode, ruleset *Ruleset, ticker *time.Ticker, callback chan<- error) {
+	for range ticker.C {
+		if *currentMode == nil {
+			continue
 		}
-	}(ruleset, currentModeName, c, ticker)
 
-	return c
+		temp, err := getTemp()
+		if err != nil {
+			callback <- err
+			return
+		}
+
+		mode, err := ruleset.findAppropriateMode(temp)
+		notreached(err)
+
+		if mode.Name == (*currentMode).Name {
+			continue
+		}
+
+		log.Printf("should upgrade (checked with temperature: %f°C)\n", temp)
+		callback <- nil
+	}
 }
 
 // sometimes my os decides it's time for lift-off; even when the current cpu temperatur (and Elon Musk) says it's not. This occurs often when AC is plugged in
 // in this case the current level as given by reading from the fan device does not equal the level of the mode we're currently in. In this case we should trigger a recheck on the currently best suited mode
-func checkForUnmonitoredDeviceChanges(wantedCurrentLevel string, timeout time.Duration) <-chan error {
-	c := make(chan error)
-
-	ticker := time.NewTicker(timeout)
-
-	go func(wantedCurrentLevel string, callback chan<- error, ticker *time.Ticker) {
-		for range ticker.C {
-
-			level, err := GetCurrentFanLevel(dev)
-			if err != nil {
-				c <- err
-				return
-			}
-
-			if level == wantedCurrentLevel {
-				continue
-			}
-
-			c <- nil
+func checkForUnmonitoredDeviceChanges(currentMode **Mode, ticker *time.Ticker, callback chan<- error) {
+	for range ticker.C {
+		if *currentMode == nil {
+			continue
 		}
-	}(wantedCurrentLevel, c, ticker)
 
-	return c
+		level, err := GetCurrentFanLevel(dev)
+		if err != nil {
+			callback <- err
+			return
+		}
+
+		if level == (*currentMode).Level {
+			continue
+		}
+
+		log.Printf("umonitored device change\n")
+		callback <- nil
+	}
+}
+
+func checkForTimeout(ruleset Ruleset, ticker *time.Ticker, callback chan<- error) {
+	for range ticker.C {
+		log.Printf("timed out after %v\n", ruleset.Timeouts.Standard.Duration)
+		callback <- nil
+	}
 }
 
 func logic(ruleset *Ruleset) error {
 
-	var mode *Mode
+	var (
+		mode     *Mode
+		callback = make(chan error)
+	)
+
+	go checkForUnmonitoredDeviceChanges(&mode, time.NewTicker(ruleset.Timeouts.UnmonitoredChange.Duration), callback)
+	go checkIfShouldUpgrade(&mode, ruleset, time.NewTicker(ruleset.Timeouts.Upgrade.Duration), callback)
+	go checkIfShouldDowngrade(&mode, time.NewTicker(ruleset.Timeouts.Downgrade.Duration), callback)
+	go checkForTimeout(*ruleset, time.NewTicker(ruleset.Timeouts.Standard.Duration), callback)
 
 	for {
 		log.Printf("get temperatur information..")
@@ -112,16 +119,18 @@ func logic(ruleset *Ruleset) error {
 		log.Printf("success\n")
 		log.Printf("\n")
 
-		select {
-		case err = <-checkIfShouldDowngrade(float32(mode.TransitionWhenBelow), ruleset.Timeouts.Downgrade.Duration):
-			log.Printf("should downgrade\n")
-		case err = <-checkIfShouldUpgrade(ruleset, mode.Name, ruleset.Timeouts.Upgrade.Duration):
-			log.Printf("should upgrade\n")
-		case err = <-checkForUnmonitoredDeviceChanges(mode.Level, ruleset.Timeouts.UnmonitoredChange.Duration):
-			log.Printf("umonitored device change\n")
-		case <-time.After(ruleset.Timeouts.Standard.Duration):
-			log.Printf("timed out after %v\n", ruleset.Timeouts.Standard.Duration)
-		}
+		err = <-callback
+
+		// select {
+		// case err = <-checkIfShouldDowngrade(float32(mode.TransitionWhenBelow), ruleset.Timeouts.Downgrade.Duration):
+		// 	log.Printf("should downgrade\n")
+		// case err = <-checkIfShouldUpgrade(ruleset, mode.Name, ruleset.Timeouts.Upgrade.Duration):
+		// 	log.Printf("should upgrade\n")
+		// case err = <-checkForUnmonitoredDeviceChanges(mode.Level, ruleset.Timeouts.UnmonitoredChange.Duration):
+		// 	log.Printf("umonitored device change\n")
+		// case <-time.After(ruleset.Timeouts.Standard.Duration):
+		// 	log.Printf("timed out after %v\n", ruleset.Timeouts.Standard.Duration)
+		// }
 
 		if err != nil {
 			return err
