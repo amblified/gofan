@@ -76,12 +76,14 @@ var acceptingFanLevels = map[string]struct{}{
 func logic() error {
 
 	pipeReader, pipeWriter := io.Pipe()
+	defer pipeReader.Close()
+	defer pipeWriter.Close()
 
 	tail := exec.Command("tail", "-f", *streamPath)
 	tail.Stdout = pipeWriter
 	tail.Stderr = log.Writer()
 
-	errs := make(chan error, 2)
+	errs := make(chan error, 3)
 
 	go func() {
 		errs <- tail.Run()
