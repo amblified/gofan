@@ -25,19 +25,19 @@ func logic(ruleset *Ruleset) error {
 
 	for {
 		log.Printf("get temperatur information..")
-		temp, err := getTemp()
+		temp, err := GetTemp()
 		if err != nil {
 			return err
 		}
 		log.Printf("found: temperature is at %f°C\n", temp)
 
 		log.Printf("searching mode..")
-		mode, err = ruleset.findAppropriateMode(temp)
+		mode, err = ruleset.FindAppropriateMode(temp)
 		notreached(err)
 		log.Printf("found %q\n", mode.Name)
 
 		log.Printf("applying level %q..", mode.Level)
-		err = applyLevel(mode.Level)
+		err = ApplyLevel(mode.Level)
 		if err != nil {
 			return err
 		}

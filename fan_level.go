@@ -19,10 +19,10 @@ func GetCurrentFanLevel(dev string) (string, error) {
 		return "", err
 	}
 
-	return parseFanLevel(stdout.String()), nil
+	return ParseFanLevel(stdout.String()), nil
 }
 
-func parseFanLevel(str string) string {
+func ParseFanLevel(str string) string {
 	const whitespace = " \t"
 
 	lines := strings.Split(str, "\n")
@@ -46,7 +46,7 @@ func parseFanLevel(str string) string {
 	return line
 }
 
-func applyLevel(level string) error {
+func ApplyLevel(level string) error {
 	// echo level 0 | tee /proc/acpi/ibm/fan
 
 	stdin := &bytes.Buffer{}

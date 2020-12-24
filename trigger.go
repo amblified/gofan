@@ -17,7 +17,7 @@ func checkIfShouldDowngrade(currentMode **Mode, ticker *time.Ticker, callback ch
 			continue
 		}
 
-		temp, err := getTemp()
+		temp, err := GetTemp()
 		if err != nil {
 			callback <- err
 			return
@@ -38,16 +38,20 @@ func checkIfShouldUpgrade(currentMode **Mode, ruleset *Ruleset, ticker *time.Tic
 			continue
 		}
 
-		temp, err := getTemp()
+		temp, err := GetTemp()
 		if err != nil {
 			callback <- err
 			return
 		}
 
-		mode, err := ruleset.findAppropriateMode(temp)
+		mode, err := ruleset.FindAppropriateMode(temp)
 		notreached(err)
 
 		if mode.Name == (*currentMode).Name {
+			continue
+		}
+
+		if mode.StartingAt < (*currentMode).StartingAt {
 			continue
 		}
 

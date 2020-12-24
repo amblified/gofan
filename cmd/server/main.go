@@ -48,7 +48,7 @@ func cleanStreamFile() error {
 	return errsAny(err1, err2)
 }
 
-func applyLevel(level string) error {
+func ApplyLevel(level string) error {
 	// echo level 0 | tee /proc/acpi/ibm/fan
 
 	stdin := &bytes.Buffer{}
@@ -119,7 +119,7 @@ func logic() error {
 				continue
 			}
 
-			err = applyLevel(line)
+			err = ApplyLevel(line)
 			if err != nil {
 				errs <- err
 			}

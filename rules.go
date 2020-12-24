@@ -48,7 +48,7 @@ func (m Mode) String() string {
 	return string(bytes) + "\n"
 }
 
-func readRuleset(path string) (*Ruleset, error) {
+func ReadRuleset(path string) (*Ruleset, error) {
 	file, err := os.Open(path)
 	if err != nil {
 		return nil, err
@@ -69,14 +69,14 @@ func init() {
 	DefaultRulesetPath, err = filepath.Abs(DefaultRulesetPath)
 	notreached(err)
 	log.Printf("loading rules from %q\n", DefaultRulesetPath)
-	DefaultRuleset, err = readRuleset(DefaultRulesetPath)
+	DefaultRuleset, err = ReadRuleset(DefaultRulesetPath)
 	if err != nil {
 		log.Printf("fatal error occured when trying to load ruleset. aborting..")
 		os.Exit(1)
 	}
 }
 
-func (r Ruleset) findAppropriateMode(temp float32) (*Mode, error) {
+func (r Ruleset) FindAppropriateMode(temp float32) (*Mode, error) {
 	if len(r.Modes) < 1 {
 		_notreached()
 	}

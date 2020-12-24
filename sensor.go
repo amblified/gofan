@@ -69,7 +69,7 @@ type CoreTempIsa struct {
 	} `json:"Core 3"`
 }
 
-func getInfo() (*SensorsOutput, error) {
+func GetInfo() (*SensorsOutput, error) {
 	stdout := &bytes.Buffer{}
 
 	sensors := exec.Command("sensors", "-j")
@@ -92,8 +92,8 @@ func getInfo() (*SensorsOutput, error) {
 	return &sensorsData, nil
 }
 
-func getTemp() (float32, error) {
-	info, err := getInfo()
+func GetTemp() (float32, error) {
+	info, err := GetInfo()
 	if err != nil {
 		return -1, err
 	}
