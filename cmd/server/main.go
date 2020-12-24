@@ -119,7 +119,10 @@ func logic() error {
 				continue
 			}
 
-			applyLevel(line)
+			err = applyLevel(line)
+			if err != nil {
+				errs <- err
+			}
 		}
 	}()
 
