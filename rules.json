@@ -7,15 +7,15 @@
   },
   "modes": [
     {
-      "name": "default",
-      "starting_at": 0,
-      "level": "0"
-    },
-    {
       "name": "medium",
       "starting_at": 60,
       "transition_when_below": 50,
       "level": "2"
+    },
+    {
+      "name": "default",
+      "starting_at": 0,
+      "level": "0"
     },
     {
       "name": "fast",
