@@ -76,17 +76,22 @@ func init() {
 	}
 }
 
-// TODO: NOTE: that the default mode MUST (currently) be the first one listed in the json file; otherwise this method might return falsy results. FIX: maybe sort the modes?
 func (r Ruleset) findAppropriateMode(temp float32) (*Mode, error) {
 	if len(r.Modes) < 1 {
 		_notreached()
 	}
 
-	mode := r.Modes[0]
+	minimum := r.Modes[0]
 	for _, m := range r.Modes[1:] {
-		if float32(m.StartingAt) < temp && m.StartingAt > mode.StartingAt {
-			mode = m
+		if m.StartingAt < minimum.StartingAt {
+			minimum = m
 		}
 	}
-	return &mode, nil
+
+	for _, m := range r.Modes {
+		if float32(m.StartingAt) < temp && m.StartingAt > minimum.StartingAt {
+			minimum = m
+		}
+	}
+	return &minimum, nil
 }
