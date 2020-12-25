@@ -1,4 +1,4 @@
-package main
+package fan
 
 // simple copy & paste from https://stackoverflow.com/questions/48050945/how-to-unmarshal-json-into-durations
 

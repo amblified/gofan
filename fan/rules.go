@@ -1,16 +1,9 @@
-package main
+package fan
 
 import (
 	"encoding/json"
 	"io/ioutil"
-	"log"
 	"os"
-	"path/filepath"
-)
-
-var (
-	DefaultRuleset     *Ruleset
-	DefaultRulesetPath = "./rules.json"
 )
 
 type Ruleset struct {
@@ -60,20 +53,6 @@ func ReadRuleset(path string) (*Ruleset, error) {
 	json.Unmarshal(bytes, &rules)
 
 	return &rules, nil
-}
-
-// go is fun, innit?
-func init() {
-	var err error
-
-	DefaultRulesetPath, err = filepath.Abs(DefaultRulesetPath)
-	notreached(err)
-	log.Printf("loading rules from %q\n", DefaultRulesetPath)
-	DefaultRuleset, err = ReadRuleset(DefaultRulesetPath)
-	if err != nil {
-		log.Printf("fatal error occured when trying to load ruleset. aborting..")
-		os.Exit(1)
-	}
 }
 
 func (r Ruleset) FindAppropriateMode(temp float32) (*Mode, error) {

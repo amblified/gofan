@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"bytes"
 	"flag"
 	"fmt"
 	"io"
@@ -11,6 +10,8 @@ import (
 	"os/exec"
 	"os/signal"
 	"strings"
+
+	"gitlab.com/malte-L/go_fan/fan"
 )
 
 var (
@@ -46,21 +47,6 @@ func cleanStreamFile() error {
 	file, err2 := os.Create(*streamPath)
 	defer file.Close()
 	return errsAny(err1, err2)
-}
-
-func ApplyLevel(level string) error {
-	// echo level 0 | tee /proc/acpi/ibm/fan
-
-	stdin := &bytes.Buffer{}
-
-	tee := exec.Command("tee", *dev)
-	tee.Stdin = stdin
-	tee.Stderr = os.Stderr
-	tee.Stdout = log.Writer()
-
-	stdin.WriteString("level " + level + "\n")
-
-	return tee.Run()
 }
 
 var acceptingFanLevels = map[string]struct{}{
@@ -119,7 +105,7 @@ func logic() error {
 				continue
 			}
 
-			err = ApplyLevel(line)
+			err = fan.ApplyLevel(line)
 			if err != nil {
 				errs <- err
 			}

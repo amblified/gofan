@@ -9,15 +9,17 @@ package main
 import (
 	"log"
 	"time"
+
+	"gitlab.com/malte-L/go_fan/fan"
 )
 
-func checkIfShouldDowngrade(currentMode **Mode, ticker *time.Ticker, callback chan<- error) {
+func checkIfShouldDowngrade(currentMode **fan.Mode, ticker *time.Ticker, callback chan<- error) {
 	for range ticker.C {
 		if *currentMode == nil {
 			continue
 		}
 
-		temp, err := GetTemp()
+		temp, err := fan.GetTemp()
 		if err != nil {
 			callback <- err
 			return
@@ -32,13 +34,23 @@ func checkIfShouldDowngrade(currentMode **Mode, ticker *time.Ticker, callback ch
 	}
 }
 
-func checkIfShouldUpgrade(currentMode **Mode, ruleset *Ruleset, ticker *time.Ticker, callback chan<- error) {
+func notreached(err error) {
+	if err != nil {
+		_notreached()
+	}
+}
+
+func _notreached() {
+	panic("this code should not be reached")
+}
+
+func checkIfShouldUpgrade(currentMode **fan.Mode, ruleset *fan.Ruleset, ticker *time.Ticker, callback chan<- error) {
 	for range ticker.C {
 		if *currentMode == nil {
 			continue
 		}
 
-		temp, err := GetTemp()
+		temp, err := fan.GetTemp()
 		if err != nil {
 			callback <- err
 			return
@@ -62,13 +74,13 @@ func checkIfShouldUpgrade(currentMode **Mode, ruleset *Ruleset, ticker *time.Tic
 
 // sometimes my os decides it's time for lift-off; even when the current cpu temperatur (and Elon Musk) says it's not. This occurs often when AC is plugged in
 // in this case the current level as given by reading from the fan device does not equal the level of the mode we're currently in. In this case we should trigger a recheck on the currently best suited mode
-func checkForUnmonitoredDeviceChanges(currentMode **Mode, ticker *time.Ticker, callback chan<- error) {
+func checkForUnmonitoredDeviceChanges(currentMode **fan.Mode, ticker *time.Ticker, callback chan<- error) {
 	for range ticker.C {
 		if *currentMode == nil {
 			continue
 		}
 
-		level, err := GetCurrentFanLevel(dev)
+		level, err := fan.GetCurrentFanLevel(*devPath)
 		if err != nil {
 			callback <- err
 			return
@@ -83,7 +95,7 @@ func checkForUnmonitoredDeviceChanges(currentMode **Mode, ticker *time.Ticker, c
 	}
 }
 
-func checkForTimeout(ruleset Ruleset, ticker *time.Ticker, callback chan<- error) {
+func checkForTimeout(ruleset fan.Ruleset, ticker *time.Ticker, callback chan<- error) {
 	for range ticker.C {
 		log.Printf("timed out after %v\n", ruleset.Timeouts.Standard.Duration)
 		callback <- nil

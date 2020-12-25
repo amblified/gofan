@@ -1,4 +1,4 @@
-package main
+package fan
 
 import (
 	"bytes"
@@ -47,7 +47,7 @@ func ParseFanLevel(str string) string {
 }
 
 func ApplyLevel(level string) error {
-	// echo level 0 | tee /proc/acpi/ibm/fan
+	dev := "/proc/acpi/ibm/fan"
 
 	stdin := &bytes.Buffer{}
 
