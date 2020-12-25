@@ -46,9 +46,7 @@ func ParseFanLevel(str string) string {
 	return line
 }
 
-func ApplyLevel(level string) error {
-	dev := "/proc/acpi/ibm/fan"
-
+func ApplyLevel(dev, level string) error {
 	stdin := &bytes.Buffer{}
 
 	tee := exec.Command("tee", dev)

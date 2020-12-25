@@ -15,38 +15,22 @@ import (
 )
 
 var (
-	dev        *string = flag.String("dev", "/proc/acpi/ibm/fan", "the path to the fan device")
-	streamPath *string = flag.String("stream", "stream", "path to a file which is used to receive requests")
+	streamPath *string = flag.String("stream", "", "[required] path to a file which is used to receive requests")
+	devPath    *string = flag.String("dev", "", "[required] path to fan device. something like \"/proc/acpi/ibm/fan\"")
 )
+
+func requiredString(variable *string) {
+	if *variable == "" {
+		flag.Usage()
+		os.Exit(1)
+	}
+}
 
 func init() {
 	flag.Parse()
 
-	if *streamPath == "" {
-		flag.Usage()
-		os.Exit(1)
-	}
-
-	// if err := cleanStreamFile(); err != nil {
-	// 	log.Fatal(err)
-	// }
-}
-
-func errsAny(errs ...error) error {
-	for _, e := range errs {
-		if e != nil {
-			return e
-		}
-	}
-
-	return nil
-}
-
-func cleanStreamFile() error {
-	err1 := os.Remove(*streamPath)
-	file, err2 := os.Create(*streamPath)
-	defer file.Close()
-	return errsAny(err1, err2)
+	requiredString(streamPath)
+	requiredString(devPath)
 }
 
 var acceptingFanLevels = map[string]struct{}{
@@ -105,7 +89,7 @@ func logic() error {
 				continue
 			}
 
-			err = fan.ApplyLevel(line)
+			err = fan.ApplyLevel(*devPath, line)
 			if err != nil {
 				errs <- err
 			}
