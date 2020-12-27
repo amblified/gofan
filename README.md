@@ -24,4 +24,4 @@ If any of the listed events fires, the client will determine the best suited fan
 The server validates the received fan level and forwards it into the given `-dev` file (in example above: `/proc/acpi/ibm/fan`).
 
 ## Future Plans
-Currently the client is written specifically for my needs. Even tho you can write your own client using the functionality of [/fan](https://gitlab.com/malte-L/go-fan/-/tree/master/fan) it should be easier in the future to customize the behaviour of the fan controller.
+Currently the client is written specifically for my needs. Even though you can write your own client using the functionality of [/fan](https://gitlab.com/malte-L/go-fan/-/tree/master/fan) it should be easier in the future to customize the behaviour of the fan controller.
