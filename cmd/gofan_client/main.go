@@ -3,7 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"time"
@@ -13,7 +15,8 @@ import (
 )
 
 const (
-	defaultConfigFileName = ".gofan"
+	configDirName         = "gofan"
+	defaultConfigFileName = "rules"
 )
 
 var (
@@ -21,7 +24,7 @@ var (
 	rulesetPath *string = flag.String("rules", "", "[required] path to a file which stores the ruleset")
 	devPath     *string = flag.String("dev", "", "[required] path to fan device. something like \"/proc/acpi/ibm/fan\"")
 
-	stream *os.File
+	stream io.WriteCloser
 )
 
 func requiredString(variable *string) {
@@ -29,6 +32,30 @@ func requiredString(variable *string) {
 		flag.Usage()
 		os.Exit(1)
 	}
+}
+
+func initStream() error {
+	_, streamFileName := filepath.Split(*streamPath)
+	abs, err := filepath.Abs(streamFileName)
+	if err != nil {
+		return err
+	}
+
+	if filepath.Ext(streamFileName) != ".sock" {
+		log.Printf("using %q as a text-file for communication\n", abs)
+		stream, err = os.OpenFile(*streamPath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+
+		return nil
+	}
+
+	log.Printf("using %q as a unix socket for communication", abs)
+	stream, err = net.Dial("unix", *streamPath)
+	if err != nil {
+		return err
+	}
+	log.Printf("successfully established connection")
+
+	return nil
 }
 
 func init() {
@@ -43,16 +70,12 @@ func init() {
 		var err error
 		if *rulesetPath == "" {
 			*rulesetPath, err = os.UserConfigDir()
-			*rulesetPath = filepath.Join(*rulesetPath, defaultConfigFileName)
+			*rulesetPath = filepath.Join(*rulesetPath, configDirName, defaultConfigFileName)
 		}
 		return err
 	})
 
-	group.Go(func() error {
-		var err error
-		stream, err = os.OpenFile(*streamPath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-		return err
-	})
+	group.Go(initStream)
 
 	if err := group.Wait(); err != nil {
 		log.Fatal(err)
@@ -60,11 +83,12 @@ func init() {
 }
 
 func sendLevelChangeRequest(level string) error {
-	_, err := stream.WriteString(level + "\n")
+	_, err := stream.Write([]byte(level + "\n"))
 	return err
 }
 
 func logic(ruleset *fan.Ruleset) error {
+	defer stream.Close()
 
 	var (
 		mode     *fan.Mode
@@ -108,7 +132,6 @@ func logic(ruleset *fan.Ruleset) error {
 
 func main() {
 	log.Printf("go\n")
-	defer stream.Close()
 
 	ruleset, err := fan.ReadRuleset(*rulesetPath)
 	if err != nil {

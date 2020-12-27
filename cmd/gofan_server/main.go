@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"os/signal"
+	"path/filepath"
 	"strings"
 
 	"gitlab.com/malte-L/go_fan/fan"
@@ -17,6 +19,8 @@ import (
 var (
 	streamPath *string = flag.String("stream", "", "[required] path to a file which is used to receive requests")
 	devPath    *string = flag.String("dev", "", "[required] path to fan device. something like \"/proc/acpi/ibm/fan\"")
+
+	stream io.ReadCloser
 )
 
 func requiredString(variable *string) {
@@ -26,14 +30,60 @@ func requiredString(variable *string) {
 	}
 }
 
-// not working as intended yet... use unix sockets instead
-func initStreamFile() {
-	_ = os.Remove(*streamPath)
-	file, err := os.Create(*streamPath)
+func initStream() (io.ReadCloser, func(chan<- error), error) {
+	_, streamFileName := filepath.Split(*streamPath)
+	abs, err := filepath.Abs(streamFileName)
 	if err != nil {
-		log.Fatal(err)
+		return nil, nil, err
 	}
-	file.Close()
+
+	if filepath.Ext(streamFileName) != ".sock" {
+		log.Printf("using %q as a text-file for communication\n", abs)
+
+		stream, pipeWriter := io.Pipe()
+
+		tail := exec.Command("tail", "-f", *streamPath)
+		tail.Stdout = pipeWriter
+		tail.Stderr = log.Writer()
+
+		return stream, func(errs chan<- error) {
+			defer pipeWriter.Close()
+			errs <- tail.Run()
+		}, nil
+	}
+
+	log.Printf("using %q as a unix socket for communication", abs)
+
+	socketExists := true
+
+	_, err = os.Stat(*streamPath)
+	switch err.(type) {
+	case *os.PathError:
+		socketExists = false
+	}
+
+	l, err := net.Listen("unix", *streamPath)
+	if err != nil {
+		return nil, nil, err
+	}
+	if !socketExists {
+		// in this case net.Listen() has created the socket
+		// but the server runs as sudo, thus not everyone will be
+		// able to access that socket
+		perm := 0x1FF // TODO: define permissions more precisely
+		mode := (int(os.ModeSocket) & ^0x1FF) | perm
+		os.Chmod(*streamPath, os.FileMode(mode))
+	}
+
+	stream, err := l.Accept()
+	if err != nil {
+		return nil, nil, err
+	}
+	log.Printf("successfully established connection")
+
+	return stream, func(chan<- error) {
+		l.Close()
+	}, nil
 }
 
 func init() {
@@ -41,8 +91,6 @@ func init() {
 
 	requiredString(streamPath)
 	requiredString(devPath)
-
-	// initStreamFile()
 }
 
 var acceptingFanLevels = map[string]struct{}{
@@ -57,19 +105,16 @@ var acceptingFanLevels = map[string]struct{}{
 
 func logic() error {
 
-	pipeReader, pipeWriter := io.Pipe()
-	defer pipeReader.Close()
-	defer pipeWriter.Close()
-
-	tail := exec.Command("tail", "-f", *streamPath)
-	tail.Stdout = pipeWriter
-	tail.Stderr = log.Writer()
+	s, routine, err := initStream()
+	if err != nil {
+		return err
+	}
+	stream = s
+	defer stream.Close()
 
 	errs := make(chan error, 3)
 
-	go func() {
-		errs <- tail.Run()
-	}()
+	go routine(errs)
 
 	go func() {
 		signalC := make(chan os.Signal)
@@ -80,7 +125,7 @@ func logic() error {
 	go func() {
 		defer func() { errs <- nil }()
 
-		bufferedTail := bufio.NewReader(pipeReader)
+		bufferedTail := bufio.NewReader(stream)
 
 		for {
 			line, err := bufferedTail.ReadString(byte('\n'))
