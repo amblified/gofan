@@ -17,7 +17,7 @@ and the client with:
 The client will now detect different events:
 - **ShouldUpgrade**: there exists a better suited (a faster) fan mode for the current temperature
 - **ShouldDowngrade**: there exists a better suited (a slower) fan mode for the current temperature
-- **UnmonitoredDeviceChange**: another party changed the current fan mode. This could be achieved using for example `echo level 2 | sudo /proc/acpi/ibm/fan`. In my case my laptop sometimes turns on the fan on max speed upon plugging in AC.
+- **UnmonitoredDeviceChange**: another party changed the current fan mode. This could be achieved using for example `echo level 2 | sudo tee /proc/acpi/ibm/fan`. In my case my laptop sometimes turns on the fan on max speed upon plugging in AC.
 - **TimedOut**: using the example config file, the client times out after 1 minute (`"standard": "1m"`).
 
 If any of the listed events fires, the client will determine the best suited fan mode for the current cpu-temperature and send it to the server.
