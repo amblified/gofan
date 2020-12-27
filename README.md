@@ -9,11 +9,9 @@ Library dependencies are listed in [go.mod](https://gitlab.com/malte-L/go-fan/-/
 ## Example Usage
 
 Start the server with:
-
-```sudo ./gofan_server -stream=gofan.sock -dev=/proc/acpi/ibm/fan```
+`sudo ./gofan_server -stream=gofan.sock -dev=/proc/acpi/ibm/fan`
 
 and the client with:
-
 `./gofan_client -stream=gofan.sock -dev=/proc/acpi/ibm/fan`.
 
 The client will now detect different events:
