@@ -26,11 +26,23 @@ func requiredString(variable *string) {
 	}
 }
 
+// not working as intended yet... use unix sockets instead
+func initStreamFile() {
+	_ = os.Remove(*streamPath)
+	file, err := os.Create(*streamPath)
+	if err != nil {
+		log.Fatal(err)
+	}
+	file.Close()
+}
+
 func init() {
 	flag.Parse()
 
 	requiredString(streamPath)
 	requiredString(devPath)
+
+	// initStreamFile()
 }
 
 var acceptingFanLevels = map[string]struct{}{
