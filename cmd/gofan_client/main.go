@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"gitlab.com/malte-L/go_fan/fan"
+	"golang.org/x/sync/errgroup"
 )
 
 const (
@@ -36,18 +37,24 @@ func init() {
 	requiredString(streamPath)
 	requiredString(devPath)
 
-	var err error
+	group := &errgroup.Group{}
 
-	if *rulesetPath == "" {
-		*rulesetPath, err = os.UserConfigDir()
-		if err != nil {
-			log.Fatal(err)
+	group.Go(func() error {
+		var err error
+		if *rulesetPath == "" {
+			*rulesetPath, err = os.UserConfigDir()
+			*rulesetPath = filepath.Join(*rulesetPath, defaultConfigFileName)
 		}
-		*rulesetPath = filepath.Join(*rulesetPath, defaultConfigFileName)
-	}
+		return err
+	})
 
-	stream, err = os.OpenFile(*streamPath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
-	if err != nil {
+	group.Go(func() error {
+		var err error
+		stream, err = os.OpenFile(*streamPath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
+		return err
+	})
+
+	if err := group.Wait(); err != nil {
 		log.Fatal(err)
 	}
 }
