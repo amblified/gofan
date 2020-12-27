@@ -5,9 +5,14 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"time"
 
 	"gitlab.com/malte-L/go_fan/fan"
+)
+
+const (
+	defaultConfigFileName = ".gofan"
 )
 
 var (
@@ -29,10 +34,18 @@ func init() {
 	flag.Parse()
 
 	requiredString(streamPath)
-	requiredString(rulesetPath)
 	requiredString(devPath)
 
 	var err error
+
+	if *rulesetPath == "" {
+		*rulesetPath, err = os.UserConfigDir()
+		if err != nil {
+			log.Fatal(err)
+		}
+		*rulesetPath = filepath.Join(*rulesetPath, defaultConfigFileName)
+	}
+
 	stream, err = os.OpenFile(*streamPath, os.O_APPEND|os.O_WRONLY, os.ModeAppend)
 	if err != nil {
 		log.Fatal(err)
@@ -92,7 +105,7 @@ func main() {
 
 	ruleset, err := fan.ReadRuleset(*rulesetPath)
 	if err != nil {
-		log.Fatalf("could not read ruleset")
+		log.Fatalf("could not read ruleset from %q", *rulesetPath)
 	}
 
 	if err := logic(ruleset); err != nil {
