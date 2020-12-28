@@ -3,7 +3,7 @@ A small (customizeable) fan control for linux.
 
 ## Dependencies
 The client uses [lm_sensors](https://hwmon.wiki.kernel.org/lm_sensors) for fetching cpu temperature.
-Library dependencies are listed in [go.mod](https://gitlab.com/malte-L/go-fan/-/blob/master/go.mod) (currently only `golang.org/x/sync`). 
+Library dependencies are listed in [go.mod](https://github.com/amblified/gofan/blob/master/go.mod) (currently only `golang.org/x/sync`). 
 
 ## Configuration
 The client can be configured using a ruleset. The ruleset is a json file containing timeouts and modes. The timeouts are used for detecting certain events (see next section) at a given frequency. 
@@ -40,7 +40,7 @@ commands:	watchdog <timeout> (<timeout> is 0 (off), 1-120 (seconds))
 
 The client will look for a configuration file in the config directory of your system (usually `.config`), it assumes the full path to be `<path to config-dir>/gofan/rules`. The path to a ruleset can be overwritten with the `-rules` flag.
 
-You can use the [example_rules.json]() if you want to get started.
+You can use the [example_rules.json](https://github.com/amblified/gofan/blob/master/examples/example_rules.json) if you want to get started.
 
 Start the server with:
 `sudo ./gofan_server -stream=gofan.sock -dev=/proc/acpi/ibm/fan`
@@ -59,4 +59,4 @@ If any of the listed events fires, the client will determine the best suited fan
 The server validates the received fan level and forwards it into the given `-dev` file (in example above: `/proc/acpi/ibm/fan`).
 
 ## Future Plans
-Currently the client is written specifically for my needs. Even though you can write your own client using the functionality of [/fan](https://gitlab.com/malte-L/go-fan/-/tree/master/fan) it should be easier in the future to customize the behaviour of the fan controller.
+Currently the client is written specifically for my needs. Even though you can write your own client using the functionality of [/fan](https://github.com/amblified/gofan/tree/master/fan) it should be easier in the future to customize the behaviour of the fan controller.
