@@ -2,28 +2,28 @@
 A small (customizeable) fan control for linux.
 
 ## Dependencies
-There are no system dependencies.
+The client uses [lm_sensors](https://hwmon.wiki.kernel.org/lm_sensors) for fetching cpu temperature.
 Library dependencies are listed in [go.mod](https://gitlab.com/malte-L/go-fan/-/blob/master/go.mod) (currently only `golang.org/x/sync`). 
 
 ## Configuration
 The client can be configured using a ruleset. The ruleset is a json file containing timeouts and modes. The timeouts are used for detecting certain events (see next section) at a given frequency. 
 ```json
-  "timeouts": {
-    "standard": "1m",
-    "upgrade": "20s",
-    "downgrade": "6s",
-    "unmonitored_change": "10s"
-  },
+"timeouts": {
+  "standard": "1m",
+  "upgrade": "20s",
+  "downgrade": "6s",
+  "unmonitored_change": "10s"
+},
 
 ```
 An example mode could look like this: 
 ```json
-    {
-      "name": "light",
-      "starting_at": 55,
-      "transition_when_below": 50,
-      "level": "1"
-    },
+{
+  "name": "light",
+  "starting_at": 55,
+  "transition_when_below": 50,
+  "level": "1"
+},
 ```
 `name` is simply an identifier. `starting_at` specifies a temperature (in °C) which has to be surpassed in order for the mode to be applied. When the temperature falls below `transition_when_below` the client will reevaluate the best fitting mode. `level` is the fan level which is applied when the prgram enters this mode. For my needs, the server currently only accepts 1-6 and "auto", but theoretically this could be any level which the fan device accepts (`cat <DEVICE>`). For example `cat /proc/acpi/ibm/fan` yields 
 ```
