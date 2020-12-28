@@ -37,13 +37,16 @@ commands:	watchdog <timeout> (<timeout> is 0 (off), 1-120 (seconds))
 
 ## Example Usage
 
+
+The client will look for a configuration file in the config directory of your system (usually `.config`), it assumes the full path to be `<path to config-dir>/gofan/rules`. The path to a ruleset can be overwritten with the `-rules` flag.
+
+You can use the [example_rules.json]() if you want to get started.
+
 Start the server with:
 `sudo ./gofan_server -stream=gofan.sock -dev=/proc/acpi/ibm/fan`
 
 and the client with:
 `./gofan_client -stream=gofan.sock -dev=/proc/acpi/ibm/fan`.
-
-The client will look for a configuration file in the config directory of your system (usually `.config`), it assumes the full path to be `<path to config-dir>/gofan/rules`. The path to a ruleset can be overwritten with the `-rules` flag.
 
 
 The client will now detect different events:
