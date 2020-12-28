@@ -5,6 +5,35 @@ A small (customizeable) fan control for linux.
 There are no system dependencies.
 Library dependencies are listed in [go.mod](https://gitlab.com/malte-L/go-fan/-/blob/master/go.mod) (currently only `golang.org/x/sync`). 
 
+## Configuration
+The client can be configured using a ruleset. The ruleset is a json file containing timeouts and modes. The timeouts are used for detecting certain events (see next section) at a given frequency. 
+```json
+  "timeouts": {
+    "standard": "1m",
+    "upgrade": "20s",
+    "downgrade": "6s",
+    "unmonitored_change": "10s"
+  },
+
+```
+An example mode could look like this: 
+```json
+    {
+      "name": "light",
+      "starting_at": 55,
+      "transition_when_below": 50,
+      "level": "1"
+    },
+```
+`name` is simply an identifier. `starting_at` specifies a temperature (in °C) which has to be surpassed in order for the mode to be applied. When the temperature falls below `transition_when_below` the client will reevaluate the best fitting mode. `level` is the fan level which is applied when the prgram enters this mode. For my needs, the server currently only accepts 1-6 and "auto", but theoretically this could be any level which the fan device accepts (`cat <DEVICE>`). For example `cat /proc/acpi/ibm/fan` yields 
+```
+status:		disabled
+speed:		0
+level:		0
+commands:	level <level> (<level> is 0-7, auto, disengaged, full-speed)
+commands:	enable, disable
+commands:	watchdog <timeout> (<timeout> is 0 (off), 1-120 (seconds))
+```
 
 ## Example Usage
 
@@ -13,6 +42,9 @@ Start the server with:
 
 and the client with:
 `./gofan_client -stream=gofan.sock -dev=/proc/acpi/ibm/fan`.
+
+The client will look for a configuration file in the config directory of your system (usually `.config`), it assumes the full path to be `<path to config-dir>/gofan/rules`. The path to a ruleset can be overwritten with the `-rules` flag.
+
 
 The client will now detect different events:
 - **ShouldUpgrade**: there exists a better suited (a faster) fan mode for the current temperature
